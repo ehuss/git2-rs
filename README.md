@@ -1,5 +1,7 @@
 # git2-rs
 
+test
+
 [Documentation](https://docs.rs/git2)
 
 libgit2 bindings for Rust
