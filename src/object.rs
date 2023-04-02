@@ -219,7 +219,7 @@ impl<'repo> std::fmt::Debug for Object<'repo> {
             Some(kind) => ds.field("kind", &kind),
             None => ds.field(
                 "kind",
-                &format!("Unknow ({})", unsafe { raw::git_object_type(&*self.raw) }),
+                &format!("Unknown ({})", unsafe { raw::git_object_type(&*self.raw) }),
             ),
         };
         ds.field("id", &self.id());
