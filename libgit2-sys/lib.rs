@@ -2,9 +2,12 @@
 #![allow(non_camel_case_types, unused_extern_crates)]
 
 // This is required to link libz when libssh2-sys is not included.
+#[cfg(not(systest))]
 extern crate libz_sys as libz;
 
-use libc::{c_char, c_int, c_uchar, c_uint, c_ushort, c_void, size_t};
+use std::ffi::{c_char, c_int, c_uchar, c_uint, c_ushort, c_void};
+type size_t = usize;
+
 #[cfg(feature = "ssh")]
 use libssh2_sys as libssh2;
 use std::ffi::CStr;

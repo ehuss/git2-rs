@@ -2,17 +2,19 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    let mut cfg = ctest2::TestGenerator::new();
+    let mut cfg = ctest::TestGenerator::new();
     if let Some(root) = env::var_os("DEP_GIT2_ROOT") {
         cfg.include(PathBuf::from(root).join("include"));
     }
 
     // Enable the unstable-sha256 rust cfg
-    // so ctest2 sees the correct function signatures
+    // so ctest sees the correct function signatures
     if env::var("CARGO_FEATURE_UNSTABLE_SHA256").is_ok() {
         cfg.cfg("feature", Some("unstable-sha256"));
         cfg.define("GIT_EXPERIMENTAL_SHA256", Some("1"));
     }
+
+    cfg.cfg("systest", None);
 
     cfg.header("git2.h")
         .header("git2/sys/errors.h")
@@ -25,17 +27,16 @@ fn main() {
         .header("git2/sys/cred.h")
         .header("git2/sys/email.h")
         .header("git2/sys/config.h")
-        .header("git2/cred_helpers.h")
-        .type_name(|s, _, _| s.to_string());
-    cfg.field_name(|_, f| match f {
-        "kind" => "type".to_string(),
-        _ => f.to_string(),
+        .header("git2/cred_helpers.h");
+    cfg.rename_struct_field(|_, f| match f.ident() {
+        "kind" => Some("type".to_string()),
+        _ => None,
     });
-    cfg.skip_field(|struct_, f| {
+    cfg.skip_struct_field(|struct_, f| {
         // this field is marked as const which ctest complains about
-        (struct_ == "git_rebase_operation" && f == "id") ||
+        (struct_.ident() == "git_rebase_operation" && f.ident() == "id") ||
         // the real name of this field is ref but that is a reserved keyword
-        (struct_ == "git_worktree_add_options" && f == "reference")
+        (struct_.ident() == "git_worktree_add_options" && f.ident() == "reference")
     });
     cfg.skip_signededness(|s| match s {
         s if s.ends_with("_cb") => true,
@@ -50,6 +51,6 @@ fn main() {
     // not entirely sure why this is failing...
     cfg.skip_roundtrip(|t| t == "git_clone_options" || t == "git_submodule_update_options");
 
-    cfg.skip_type(|t| t == "__enum_ty");
-    cfg.generate("../libgit2-sys/lib.rs", "all.rs");
+    cfg.skip_alias(|t| t.ident() == "__enum_ty");
+    ctest::generate_test(&mut cfg, "../libgit2-sys/lib.rs", "all.rs").unwrap();
 }

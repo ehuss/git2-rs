@@ -79,6 +79,7 @@ fn main() {
         "cargo:rustc-check-cfg=cfg(\
             libgit2_vendored,\
             libgit2_experimental_sha256,\
+            systest,\
         )"
     );
 
